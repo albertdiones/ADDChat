@@ -5,18 +5,53 @@
 </head>
 <body>
     <header>
-
     </header>
     <main>
-        <form action="#login" class="login">
-            Upload your encrypted profile
-            <input name="profile" type="file" />
-            <input name="password" type="password">
-            <button type="submit">Login</button>
-        </form>
-        <form action="#chat" class="chat">
-            <input name="public_key" value="" />
-        </form>
+        <section class="chat">
+            <header>
+                <form action="#login" class="login">
+                    Upload your encrypted profile
+                    <input name="profile" type="file" />
+                    <input name="password" type="password">
+                    <button type="button">Login</button>
+                </form>
+            </header>
+            <div class="history">
+                <ol>
+                    <li>
+                        <header><b>John Doe</b></header>
+                        <div class="body">Hello world</div>
+                        <footer>Jan 5 2018 <time>10:14</time></footer>
+                    </li>
+                    <li class="self">
+                        <header><b>Joe John</b></header>
+                        <div class="body">Hi John</div>
+                        <footer>Jan 5 2018 <time>10:15</time></footer>
+                    </li>
+                    <li>
+                        <header><b>John Doe</b></header>
+                        <div class="body">Hello Joe</div>
+                        <footer>Jan 5 2018 <time>10:15</time></footer>
+                    </li>
+                    <li class="self">
+                        <header><b>John Doe</b></header>
+                        <div class="body">How are you today</div>
+                        <footer>Jan 5 2018 <time>10:15</time></footer>
+                    </li>
+                </ol>
+            </div>
+            <footer>
+                <form action="#chat" class="chat">
+                    <input name="public_key" value="" />
+                    <input name="server" value="http://chat.add.ph/server" />
+                    <input name="recipient_address" />
+                    <textarea name="message"></textarea>
+                    <button type="button"></button>
+                </form>
+            </footer>
+        </section>
     </main>
+    <footer>
+    </footer>
 </body>
 </html>
