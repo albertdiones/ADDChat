@@ -1,0 +1,6 @@
+[submodule "add-framework"]
+	path = add-framework
+	url = https://github.com/albertdiones/add-framework
+[submodule "jsencrypt"]
+	path = jsencrypt
+	url = https://github.com/travist/jsencrypt.git
