@@ -4,3 +4,6 @@
 [submodule "jsencrypt"]
 	path = jsencrypt
 	url = https://github.com/travist/jsencrypt.git
+[submodule "cryptico"]
+	path = cryptico
+	url = https://github.com/wwwtyro/cryptico.git
