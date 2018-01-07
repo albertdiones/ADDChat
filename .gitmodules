@@ -7,3 +7,6 @@
 [submodule "cryptico"]
 	path = cryptico
 	url = https://github.com/wwwtyro/cryptico.git
+[submodule "crypto-js"]
+	path = crypto-js
+	url = https://github.com/brix/crypto-js.git
