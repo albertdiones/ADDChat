@@ -2,24 +2,123 @@
 <html>
 <head>
     <title>ADDChat Decentralized Chat</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="assets/libs/jsencrypt/jsencrypt.js"></script>
+    <script src="assets/libs/crypto-js/core.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"></script>
+    <script>
+        if (typeof(Storage) === "undefined") {
+            alert("Your browser is not capable")
+        }
+    </script>
+    <script>
+        $(document).ready(
+            function() {
+                var profile = JSON.parse(localStorage.getItem('addchat_profile'));
+                var $registration_form = $('form.register');
+                if (profile) {
+                    // todo: decrypt
+                    profile.data = JSON.parse(profile.encrypted_data);
+                    var profile_encrypt = new JSEncrypt({ default_key_size:256 });
+                    profile_encrypt.setPrivateKey(profile.data.key);
+                    $registration_form.hide();
+                    $('form.login').hide();
+                    var $user_info = $('header section.user_info');
+                    $user_info.find('dd.address').text(profile.address);
+                    $user_info.show();
+                }
+                else {
+                    $registration_form.submit(
+                        function () {
+                            var display_name = $(this).find('input[name=name]').val();
+                            var password = $(this).find('input[name=password]').val();
+                            var passphrase = display_name + ':::' + password;
+                            var jsencrypt = new JSEncrypt({ default_key_size:256 });
+                            var private_key = jsencrypt.getPrivateKeyB64();
+                            // console.log(private_key);
+                            var public_key = jsencrypt.getPublicKeyB64();
+                            // console.log(public_key);
+
+                            var private_data = {
+                                key: private_key,
+                                display_name: display_name,
+                                chat_history: {}
+                            };
+
+                            // todo: encrypt
+                            var profile = JSON.stringify({
+                                address: public_key,
+                                encrypted_data: JSON.stringify(private_data)
+                            });
+
+                            localStorage.setItem('addchat_profile', profile);
+
+                            alert('Successfully created new profile');
+
+                            return false;
+                        }
+                    )
+                }
+
+                $('form.send_message').submit(
+                    function() {
+                        var $form = $(this);
+                        var data = {
+                            mode: 'send_message',
+                            recipient_address: $form.find('[name=recipient_address]').val()
+                        };
+                        var private_data =  {
+                            sender_address: profile.address,
+                            display_name: profile.data.display_name,
+                            message: $form.find('[name=message]').val(),
+                            timestamp: Math.floor(Date.now() / 1000)
+                        };
+                        var private_data_json = JSON.stringify(private_data);
+                        //var signature = profile_encrypt.encrypt(private_data_json);
+                        var recipient_encrypt = new JSEncrypt();
+                        recipient_encrypt.setPublicKey(data.recipient_address);
+                        var key = Math.random().toString(36).substring(2);
+                        data.encrypted_key = recipient_encrypt.encrypt(key);
+
+                        data.encrypted_data = ""+CryptoJS.AES.encrypt(
+                            private_data_json,
+                            key
+                        );
+                        /*$.getJSON(
+                            $form.find('[name=server]').val(),
+                            data
+                        );*/
+                        console.log(data);
+                        return false;/**/
+                    }
+                )
+            })
+    </script>
 </head>
 <body>
     <header>
+        ADDChat - Decentralized Chat Protocol
+        <section class="user_info">
+            <dl>
+                <dt class="address">Address</dt>
+                <dd class="address"></dd>
+            </dl>
+        </section>
     </header>
     <main>
         <section class="chat">
             <header>
-                <form action="#login" class="login">
-                    Upload your encrypted profile
+                <form action="#login" method="post" class="login">
+                    <h2>Login using profile file</h2>
                     <input name="profile" type="file" />
                     <input name="password" type="password">
                     <button type="button">Login</button>
                 </form>
-                <form action="#register" class="register">
-                    Create a new profile
+                <form action="#register"  method="post"  class="register">
+                    <h2>Create a new profile</h2>
                     Your display name: <input name="name" type="text" />
                     Type in your desired password: <input name="password" type="password" />
-                    <button type="button">Create Profile</button>
+                    <button type="submit">Create Profile</button>
                 </form>
             </header>
             <div class="history">
@@ -47,12 +146,11 @@
                 </ol>
             </div>
             <footer>
-                <form action="#chat" class="chat">
-                    <input name="public_key" value="" />
-                    <input name="server" value="http://chat.add.ph/server" />
-                    <input name="recipient_address" />
-                    <textarea name="message"></textarea>
-                    <button type="button"></button>
+                <form action="#send_message" method="post" class="send_message">
+                    <label><span class="label">Server: </span><input name="server" value="http://chat.add.ph/server" /></label>
+                    <label><span class="label">Recipient Address</span><input name="recipient_address" /></label>
+                    <label><span class="label">Message</span><textarea name="message"></textarea></label>
+                    <button type="submit">Send</button>
                 </form>
             </footer>
         </section>
