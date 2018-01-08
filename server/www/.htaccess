@@ -1,0 +1,5 @@
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^.*$ add.php?add_mvc_path=$0&%{QUERY_STRING} [L]
+RewriteRule ^$ add.php?add_mvc_path=index&%{QUERY_STRING} [L]

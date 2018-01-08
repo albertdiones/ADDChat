@@ -19,8 +19,8 @@
                 if (profile) {
                     // todo: decrypt
                     profile.data = JSON.parse(profile.encrypted_data);
-                    var profile_encrypt = new JSEncrypt({ default_key_size:256 });
-                    profile_encrypt.setPrivateKey(profile.data.key);
+                    var profile_auth = new JSEncrypt({ default_key_size:256 });
+                    profile_auth.setPrivateKey(profile.data.key);
                     $registration_form.hide();
                     $('form.login').hide();
                     var $user_info = $('header section.user_info');
@@ -63,18 +63,23 @@
                 $('form.send_message').submit(
                     function() {
                         var $form = $(this);
+
+                        var $button = $form.find('[type=submit]');
+                        $button.attr('disabled','disabled');
+
                         var data = {
                             mode: 'send_message',
                             recipient_address: $form.find('[name=recipient_address]').val()
                         };
+                        var $message = $form.find('[name=message]');
                         var private_data =  {
                             sender_address: profile.address,
                             display_name: profile.data.display_name,
-                            message: $form.find('[name=message]').val(),
-                            timestamp: Math.floor(Date.now() / 1000)
+                            message: $message.val(),
+                            timestamp: Date.now()
                         };
                         var private_data_json = JSON.stringify(private_data);
-                        //var signature = profile_encrypt.encrypt(private_data_json);
+                        //var signature = profile_auth.encrypt(private_data_json);
                         var recipient_encrypt = new JSEncrypt();
                         recipient_encrypt.setPublicKey(data.recipient_address);
                         var key = Math.random().toString(36).substring(2);
@@ -84,16 +89,76 @@
                             private_data_json,
                             key
                         );
-                        /*$.getJSON(
-                            $form.find('[name=server]').val(),
-                            data
-                        );*/
-                        console.log(data);
+                        $.post(
+                            $form.find('[name=server]').val()+'?mode=send_message',
+                            data,
+                            function (response) {
+                                var data = JSON.parse(response);
+                                if (data.status == 'success') {
+                                    $message.val('');
+                                    $button.removeAttr('disabled');
+                                }
+                                else {
+                                    alert("Failed to send message");
+                                }
+                            }
+                        );
+
                         return false;/**/
                     }
-                )
-            })
+                );
+
+                function check_messages() {
+                    var $send_message_form = $('form.send_message');
+                    var server_url = $send_message_form.find('[name=server]').val();
+                    var request = { mode: 'claim_messages' };
+
+                    request.address = profile.address;
+                    request.time = Date.now();
+                    request.signature = profile_auth.encrypt('claim'+request.time);
+
+                    $.get(
+                        server_url + '?mode=claim_messages',
+                        request,
+                        function (response) {
+                            var data = JSON.parse(response);
+                            if (!data) {
+                                return false;
+                            }
+                            for (x in data.messages) {
+                                var encrypted_key = data.messages[x].encrypted_key;
+                                var encrypted_data = data.messages[x].encrypted_message;
+                                var key = profile_auth.decrypt(encrypted_key);
+                                console.log(key);
+                                var json_message_data = CryptoJS.AES.decrypt(encrypted_data,key);
+                                console.log(json_message_data);
+                                var message_data = JSON.parse(json_message_data);
+                                message_list_add(message_data);
+                            }
+                        }
+                    );
+                }
+
+
+                setInterval(check_messages,1000);
+                function message_list_add(message_data) {
+                    var $history = $('div.history');
+                    var $li_template = $history.find('li.template');
+                    var $new_li = $li_template.clone();
+                    $new_li.find('.sender_address').text(message_data.sender_address);
+                    $new_li.find('.display_name').text(message_data.display_name);
+                    $new_li.find('.message').text(message_data.message);
+                    $new_li.find('.time').text(message_data.time);
+                    $new_li.insertBefore($li_template);
+                }
+            }
+        )
     </script>
+    <style>
+        section.chat li.template {
+            display:none;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -142,6 +207,11 @@
                         <header><b>John Doe</b></header>
                         <div class="body">How are you today</div>
                         <footer>Jan 5 2018 <time>10:15</time></footer>
+                    </li>
+                    <li class="template">
+                        <header>John Doe</header>
+                        <div class="body">Hello Joe</div>
+                        <footer><span class="date">Jan 5 2018</span><time>10:15</time></footer>
                     </li>
                 </ol>
             </div>
